@@ -14,19 +14,24 @@ class UsageResponse(BaseModel):
 # Initialize FastAPI app
 app = FastAPI()
 
-# Cache function to reduce resource usage
-@lru_cache(maxsize=1)
-def get_cached_usage():
+# Cache function to reduce resource usage and ensure fresh data
+def get_usage_data():
+    # Get CPU usage with a short interval
+    cpu_percent = psutil.cpu_percent(interval=0.1)
+    # Get RAM usage percent
+    ram_percent = psutil.virtual_memory().percent
+    # Current timestamp for the response
+    timestamp = time.time()
     return {
-        "cpu_usage_percent": psutil.cpu_percent(interval=None),
-        "ram_usage_percent": psutil.virtual_memory().percent,
-        "timestamp": time.time()  # Return timestamp to know when data was last fetched
+        "cpu_usage_percent": cpu_percent,
+        "ram_usage_percent": ram_percent,
+        "timestamp": timestamp
     }
 
 # Endpoint to get system usage
 @app.get("/", response_model=UsageResponse)
 def get_usage():
-    return get_cached_usage()
+    return get_usage_data()
 
 if __name__ == "__main__":
     # Run the app without reload (for production)
